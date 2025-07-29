@@ -681,17 +681,12 @@ elif page == "📈 Earthquake Types":
                         result_type = type_encoder.inverse_transform([pred])[0]
                         
                         # Create a nice result display
-                        st.success(f"""
-                        <div style="padding:15px; background-color:#e8f5e9; border-radius:10px; border-left:5px solid #4caf50;">
-                            <h3 style="color:#2e7d32;">Prediction Result</h3>
-                            <p><strong>Predicted Type:</strong> <span style="font-size:1.2em; color:#ff5252;">{result_type}</span></p>
-                            <p><strong>Confidence:</strong> {pred_proba[pred]*100:.1f}%</p>
-                            <p><strong>All Probabilities:</strong></p>
-                            <ul>
-                                {''.join([f'<li>{cls}: {prob*100:.1f}%</li>' for cls, prob in zip(type_encoder.classes_, pred_proba)])}
-                            </ul>
-                        </div>
-                        """, unsafe_allow_html=True)
+                        success_message = """
+<div style="padding:15px; background-color:#e8f5e9; border-radius:10px; border-left:5px solid #4caf50;">
+    <h3 style="color:#2e7d32;">Prediction Result</h3>
+    <p><strong>Predicted Type:</strong> <span style="font-size:1.2em; color:#ff5252;">{result_type}</span></p>
+</div>
+"""
                 except Exception as e:
                     st.error(f"Error making prediction: {str(e)}")
 
@@ -788,14 +783,16 @@ elif page == "📅 Date Predictor":
                         lower_bound = max(pred_year - confidence_range, int(df['year'].min()) if 'year' in df.columns else pred_year - confidence_range)
                         upper_bound = min(pred_year + confidence_range, int(df['year'].max()) if 'year' in df.columns else pred_year + confidence_range)
                         
-                        st.success(f"""
-                        <div style="padding:15px; background-color:#e8f5e9; border-radius:10px; border-left:5px solid #4caf50;">
-                            <h3 style="color:#2e7d32;">Prediction Result</h3>
-                            <p><strong>Predicted Year:</strong> <span style="font-size:1.2em; color:#ff5252;">{pred_year}</span></p>
+                        # Display prediction result with HTML
+                        prediction_html = f"""
+                        <div class="prediction-result">
+                            <h3>Prediction Result</h3>
+                            <p><strong>Predicted Year:</strong> <span class="prediction-value">{pred_year}</span></p>
                             <p><strong>Confidence Range:</strong> {lower_bound} to {upper_bound}</p>
                             <p><small>Note: This is an estimate based on historical patterns, not a precise forecast.</small></p>
                         </div>
-                        """, unsafe_allow_html=True)
+                        """
+                        st.markdown(prediction_html, unsafe_allow_html=True)
                 except Exception as e:
                     st.error(f"Error making prediction: {str(e)}")
 
@@ -846,7 +843,6 @@ elif page == "📅 Date Predictor":
                 st.info("Model visualization not available.")
         else:
             st.warning("Year data not available in the dataset.")
-
 # Location Analysis page
 elif page == "📍 Location Analysis":
     st.title("📍 Location Analysis")
@@ -901,16 +897,12 @@ elif page == "📍 Location Analysis":
                         pred_lon = lon_model.predict(X_pred)[0]
                         
                         # Create a nice result display
-                        st.success(f"""
-                        <div style="padding:15px; background-color:#e8f5e9; border-radius:10px; border-left:5px solid #4caf50;">
-                            <h3 style="color:#2e7d32;">Prediction Result</h3>
-                            <p><strong>Predicted Location:</strong></p>
-                            <p><span style="font-size:1.2em; color:#ff5252;">Latitude: {pred_lat:.4f}°</span></p>
-                            <p><span style="font-size:1.2em; color:#ff5252;">Longitude: {pred_lon:.4f}°</span></p>
-                            <p><small>Note: This is a statistical estimate based on historical patterns.</small></p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
+                        success_message = """
+<div style="padding:15px; background-color:#e8f5e9; border-radius:10px; border-left:5px solid #4caf50;">
+    <h3 style="color:#2e7d32;">Prediction Result</h3>
+    <p><strong>Predicted Type:</strong> <span style="font-size:1.2em; color:#ff5252;">{result_type}</span></p>
+</div>
+"""
                         # Show on map
                         st.markdown("""
                         <div class="earthquake-card map-container">
@@ -923,19 +915,22 @@ elif page == "📍 Location Analysis":
                         fig = go.Figure()
                         
                         # Add base map
+                        
+                        sample_df = df.sample(min(1000, len(df)))
                         fig.add_trace(go.Scattergeo(
-                            lat=df['latitude'].sample(min(1000, len(df)), 
-                            lon=df['longitude'].sample(min(1000, len(df))),
+                            lat=sample_df['latitude'],
+                            lon=sample_df['longitude'],
                             mode='markers',
                             marker=dict(
                                 size=5,
-                                color=df['mag'],
+                                color=sample_df['mag'],
                                 colorscale='Reds',
                                 opacity=0.7,
                                 colorbar=dict(title='Magnitude')
-                            ),
-                            name='Historical Earthquakes'
-                        )))
+                        ), 
+                          name='Historical Earthquakes'
+))
+
                         
                         # Add predicted point
                         fig.add_trace(go.Scattergeo(
@@ -1108,19 +1103,12 @@ elif page == "🧪 Prediction Lab":
                         })
                         
                         # Display results
-                        st.success(f"""
-                        <div style="padding:15px; background-color:#e8f5e9; border-radius:10px; border-left:5px solid #4caf50;">
-                            <h3 style="color:#2e7d32;">Experiment Results</h3>
-                            <p><strong>Model:</strong> {'Random Forest' if model_choice == 'rf' else 'Logistic Regression'}</p>
-                            <p><strong>Prediction:</strong> <span style="font-size:1.2em; color:#ff5252;">{'Strong Earthquake' if pred else 'Not Strong'}</span></p>
-                            <p><strong>Probability Distribution:</strong></p>
-                            <div style="display: flex; margin-bottom:10px;">
-                                <div style="width:{proba[0]*100}%; background-color:#ffcdd2; text-align:center; padding:5px;">Not Strong: {proba[0]*100:.1f}%</div>
-                                <div style="width:{proba[1]*100}%; background-color:#ff5252; color:white; text-align:center; padding:5px;">Strong: {proba[1]*100:.1f}%</div>
-                            </div>
-                            <p><small>Threshold for 'Strong' classification: {threshold*100:.0f}%</small></p>
-                        </div>
-                        """, unsafe_allow_html=True)
+                        success_message = """
+<div style="padding:15px; background-color:#e8f5e9; border-radius:10px; border-left:5px solid #4caf50;">
+    <h3 style="color:#2e7d32;">Prediction Result</h3>
+    <p><strong>Predicted Type:</strong> <span style="font-size:1.2em; color:#ff5252;">{result_type}</span></p>
+</div>
+"""
                         
                         # Show feature importance/coefficients
                         st.markdown("""
